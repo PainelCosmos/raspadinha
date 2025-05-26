@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raspadinha de Bônus - BabyWyn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .scratch-card {
+            position: relative;
+            overflow: hidden;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-circle"><circle cx="12" cy="12" r="10"></circle></svg>') 12 12, auto;
+        }
+        
+        .scratch-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                45deg,
+                #f59e0b,
+                #f59e0b 10px,
+                #fbbf24 10px,
+                #fbbf24 20px
+            );
+            mix-blend-mode: multiply;
+            z-index: 10;
+        }
+        
+        .scratch-reveal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+            z-index: 5;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            opacity: 0;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes shine {
+            to {
+                background-position: 200% center;
+            }
+        }
+        
+        .shiny-text {
+            background: linear-gradient(90deg, #fbbf24, #f59e0b, #fbbf24);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: shine 2s linear infinite;
+        }
+        
+        .scratch-instruction {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 20;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            font-weight: 600;
+            pointer-events: none;
+        }
+        
+        .scratch-instruction i {
+            margin-right: 8px;
+            animation: bounce 1s infinite alternate;
+        }
+        
+        @keyframes bounce {
+            from { transform: translateX(0); }
+            to { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-purple-900 to-indigo-900 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full">
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 hover:shadow-xl">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-yellow-400 to-yellow-500 p-6 text-center relative overflow-hidden">
+                <div class="absolute -top-20 -right-20 w-40 h-40 bg-yellow-300 rounded-full opacity-20"></div>
+                <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-yellow-300 rounded-full opacity-20"></div>
+                
+                <div class="relative z-10">
+                    <h1 class="text-3xl font-bold text-white drop-shadow-md">
+                        <i class="fas fa-gift mr-2 floating"></i> Raspadinha de Bônus
+                    </h1>
+                    <p class="text-yellow-100 mt-2">Raspe e ganhe um bônus exclusivo para depositar na BabyWyn!</p>
+                </div>
+            </div>
+            
+            <!-- Scratch Card -->
+            <div class="p-6">
+                <div class="scratch-card relative bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl h-64 w-full mx-auto shadow-lg">
+                    <div class="scratch-overlay rounded-xl"></div>
+                    <div class="scratch-reveal rounded-xl"></div>
+                    
+                    <div class="scratch-instruction">
+                        <i class="fas fa-hand-pointer"></i> Arraste seu dedo para raspar
+                    </div>
+                    
+                    <div id="prize-content" class="absolute inset-0 flex flex-col items-center justify-center p-4 opacity-0 transition-opacity duration-500">
+                        <div class="bg-white bg-opacity-90 rounded-lg p-6 text-center shadow-lg border-2 border-yellow-400">
+                            <div class="text-5xl font-bold mb-2">
+                                <span id="prize-amount" class="shiny-text">R$ 50</span>
+                            </div>
+                            <p class="text-gray-700 mb-4 font-medium">Bônus para seu primeiro depósito!</p>
+                            <div class="text-sm text-gray-500 flex items-center justify-center">
+                                <i class="fas fa-clock mr-1"></i> Válido por 24 horas
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 text-center text-white bg-indigo-800 bg-opacity-50 rounded-lg p-4 border border-indigo-700">
+                    <p class="text-sm">
+                        <i class="fas fa-lightbulb mr-1 text-yellow-300"></i> Raspe a área acima para revelar seu bônus especial!
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Instructions -->
+            <div class="bg-gray-50 p-6 border-t border-gray-200">
+                <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
+                    <i class="fas fa-list-check text-yellow-500 mr-2"></i> Como resgatar seu bônus:
+                </h3>
+                <ol class="space-y-3 text-gray-700">
+                    <li class="flex items-start">
+                        <span class="bg-yellow-500 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 text-sm font-bold">1</span>
+                        <span>Raspe e revele seu prêmio</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-yellow-500 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 text-sm font-bold">2</span>
+                        <span>Clique no botão abaixo para ir para BabyWyn</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-yellow-500 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 text-sm font-bold">3</span>
+                        <span>Faça seu primeiro depósito e o bônus será creditado automaticamente</span>
+                    </li>
+                </ol>
+                
+                <button id="claim-btn" class="mt-6 w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-bold py-4 px-6 rounded-full shadow-lg transform transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-50 hidden">
+                    <i class="fas fa-arrow-right mr-2"></i> RESGATAR BÔNUS NA BABYWYN
+                </button>
+            </div>
+        </div>
+        
+        <div class="mt-6 text-center text-white text-opacity-70 text-sm">
+            <p>Oferta válida apenas para novos usuários. Sujeito aos termos e condições.</p>
+        </div>
+    </div>
+    
+    <!-- Modal -->
+    <div id="congrats-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center modal relative overflow-hidden border-4 border-yellow-300">
+            <div class="absolute -top-10 -right-10 bg-yellow-400 rounded-full w-20 h-20 opacity-20"></div>
+            <div class="absolute -bottom-10 -left-10 bg-yellow-400 rounded-full w-32 h-32 opacity-20"></div>
+            
+            <div class="relative z-10">
+                <div class="text-6xl text-yellow-600 mb-4 floating">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Parabéns!</h2>
+                <p class="text-gray-700 mb-6">Você ganhou um bônus de <span class="font-bold text-yellow-700 shiny-text" id="modal-prize">R$ 50</span> para seu primeiro depósito!</p>
+                
+                <button id="go-to-babywyn" class="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transform transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-50">
+                    <i class="fas fa-external-link-alt mr-2"></i> IR PARA BABYWYN.COM
+                </button>
+                
+                <div class="mt-6 bg-white bg-opacity-70 rounded-lg p-3 inline-block">
+                    <p class="text-xs text-gray-500">Esta oferta expira em <span class="font-semibold">24 horas</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const scratchCard = document.querySelector('.scratch-card');
+            const scratchOverlay = document.querySelector('.scratch-overlay');
+            const scratchReveal = document.querySelector('.scratch-reveal');
+            const prizeContent = document.getElementById('prize-content');
+            const claimBtn = document.getElementById('claim-btn');
+            const congratsModal = document.getElementById('congrats-modal');
+            const goToBabywynBtn = document.getElementById('go-to-babywyn');
+            const prizeAmount = document.getElementById('prize-amount');
+            const modalPrize = document.getElementById('modal-prize');
+            const scratchInstruction = document.querySelector('.scratch-instruction');
+            
+            // Possible prizes with different values and colors
+            const prizes = [
+                { amount: "R$ 30", color: "from-yellow-300 to-yellow-400" },
+                { amount: "R$ 50", color: "from-yellow-400 to-yellow-500" },
+                { amount: "R$ 75", color: "from-yellow-500 to-yellow-600" },
+                { amount: "R$ 100", color: "from-yellow-600 to-yellow-700" },
+                { amount: "R$ 150", color: "from-yellow-700 to-yellow-800" }
+            ];
+            
+            // Select a random prize
+            const selectedPrize = prizes[Math.floor(Math.random() * prizes.length)];
+            prizeAmount.textContent = selectedPrize.amount;
+            modalPrize.textContent = selectedPrize.amount;
+            
+            let isScratching = false;
+            let isScratched = false;
+            let scratchCanvas;
+            
+            // Initialize scratch card
+            function initScratchCard() {
+                scratchCanvas = document.createElement('canvas');
+                scratchCanvas.width = scratchCard.offsetWidth;
+                scratchCanvas.height = scratchCard.offsetHeight;
+                scratchCanvas.style.position = 'absolute';
+                scratchCanvas.style.top = '0';
+                scratchCanvas.style.left = '0';
+                scratchCanvas.style.zIndex = '15';
+                scratchCanvas.style.pointerEvents = 'none';
+                scratchCard.appendChild(scratchCanvas);
+                
+                const ctx = scratchCanvas.getContext('2d');
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.lineWidth = 30;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
+                scratchCard.addEventListener('mousedown', startScratching);
+                scratchCard.addEventListener('touchstart', startScratching);
+                scratchCard.addEventListener('mousemove', scratch);
+                scratchCard.addEventListener('touchmove', scratch);
+                scratchCard.addEventListener('mouseup', endScratching);
+                scratchCard.addEventListener('touchend', endScratching);
+                scratchCard.addEventListener('mouseleave', endScratching);
+            }
+            
+            function startScratching(e) {
+                if (isScratched) return;
+                
+                isScratching = true;
+                const rect = scratchCard.getBoundingClientRect();
+                const ctx = scratchCanvas.getContext('2d');
+                
+                ctx.beginPath();
+                
+                if (e.type === 'mousedown') {
+                    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+                } else if (e.type === 'touchstart') {
+                    ctx.moveTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+                }
+                
+                // Hide instruction when scratching starts
+                if (scratchInstruction) {
+                    scratchInstruction.style.opacity = '0';
+                    scratchInstruction.style.transition = 'opacity 0.3s';
+                }
+            }
+            
+            function scratch(e) {
+                if (!isScratching || isScratched) return;
+                
+                e.preventDefault();
+                const rect = scratchCard.getBoundingClientRect();
+                const ctx = scratchCanvas.getContext('2d');
+                
+                if (e.type === 'mousemove') {
+                    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+                } else if (e.type === 'touchmove') {
+                    ctx.lineTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+                }
+                
+                ctx.stroke();
+                
+                // Check if enough has been scratched
+                checkScratchedArea();
+            }
+            
+            function endScratching() {
+                isScratching = false;
+            }
+            
+            function checkScratchedArea() {
+                const ctx = scratchCanvas.getContext('2d');
+                const imageData = ctx.getImageData(0, 0, scratchCanvas.width, scratchCanvas.height);
+                const pixels = imageData.data;
+                let transparentPixels = 0;
+                
+                for (let i = 3; i < pixels.length; i += 4) {
+                    if (pixels[i] === 0) {
+                        transparentPixels++;
+                    }
+                }
+                
+                const scratchedPercent = (transparentPixels / (scratchCanvas.width * scratchCanvas.height)) * 100;
+                
+                if (scratchedPercent > 30 && !isScratched) {
+                    isScratched = true;
+                    revealPrize();
+                }
+            }
+            
+            function revealPrize() {
+                // Show prize content
+                prizeContent.classList.remove('opacity-0');
+                prizeContent.classList.add('opacity-100');
+                
+                // Show claim button
+                claimBtn.classList.remove('hidden');
+                claimBtn.classList.add('pulse');
+                
+                // Create confetti effect
+                createConfetti();
+                
+                // Play winning sound
+                playWinningSound();
+            }
+            
+            function createConfetti() {
+                const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#8b5cf6'];
+                
+                for (let i = 0; i < 100; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = -10 + 'px';
+                    confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+                    confetti.style.width = Math.random() * 10 + 5 + 'px';
+                    confetti.style.height = Math.random() * 10 + 5 + 'px';
+                    
+                    scratchCard.appendChild(confetti);
+                    
+                    const animationDuration = Math.random() * 3 + 2;
+                    
+                    confetti.style.animation = `drop ${animationDuration}s linear forwards`;
+                    
+                    // Create keyframes dynamically
+                    const keyframes = `
+                        @keyframes drop {
+                            0% {
+                                opacity: 1;
+                                transform: translateY(0) rotate(0deg);
+                            }
+                            100% {
+                                opacity: 0;
+                                transform: translateY(${scratchCard.offsetHeight}px) rotate(${Math.random() * 360}deg);
+                            }
+                        }
+                    `;
+                    
+                    const styleEl = document.createElement('style');
+                    styleEl.innerHTML = keyframes;
+                    document.head.appendChild(styleEl);
+                }
+            }
+            
+            function playWinningSound() {
+                // Create a simple winning sound using the Web Audio API
+                try {
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.5);
+                    
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.7);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.7);
+                } catch (e) {
+                    console.log('Web Audio API not supported');
+                }
+            }
+            
+            // Claim button click handler
+            claimBtn.addEventListener('click', function() {
+                congratsModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            });
+            
+            // Go to BabyWyn button click handler
+            goToBabywynBtn.addEventListener('click', function() {
+                // Redirect to babywyn.com
+                window.location.href = 'https://babywyn.com';
+            });
+            
+            // Close modal when clicking outside
+            congratsModal.addEventListener('click', function(e) {
+                if (e.target === congratsModal) {
+                    congratsModal.classList.add('hidden');
+                    document.body.style.overflow = 'auto';
+                }
+            });
+            
+            // Initialize the scratch card
+            initScratchCard();
+            
+            // Handle responsive resize
+            window.addEventListener('resize', function() {
+                if (scratchCanvas) {
+                    scratchCanvas.width = scratchCard.offsetWidth;
+                    scratchCanvas.height = scratchCard.offsetHeight;
+                }
+            });
+        });
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - 🧬 <a href="https://enzostvs-deepsite.hf.space?remix=fudemcio/raspadinha" style="color: #fff;text-decoration: underline;" target="_blank" >Remix</a></p></body>
+</html>
